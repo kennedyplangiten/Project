@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Product from "./product.model";
+import { validateProduct } from "../utils/product.validator";
 
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -21,15 +22,25 @@ export const getProduct = async (req: Request, res: Response): Promise<void> => 
 };
 
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
+  const errors = validateProduct(req.body);
+  if (errors.length > 0) {
+    res.status(400).json({ errors });
+    return;
+  }
   try {
     const product = await Product.create(req.body);
-    res.status(200).json(product);
+    res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
   }
 };
 
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
+  const errors = validateProduct(req.body, true);
+  if (errors.length > 0) {
+    res.status(400).json({ errors });
+    return;
+  }
   try {
     const { id } = req.params;
     const product = await Product.findByIdAndUpdate(id, req.body);
