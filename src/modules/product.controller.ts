@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import Product from "./product.model";
-import { validateProduct } from "../utils/product.validator";
+import Product from "../modules/product.model";
+import { validateProduct, ProductInput } from "../utils/product.validator";
+import { sanitizeObject } from "../utils/sanitize";
 
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -22,13 +23,14 @@ export const getProduct = async (req: Request, res: Response): Promise<void> => 
 };
 
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
-  const errors = validateProduct(req.body);
+  const cleanBody = sanitizeObject(req.body);
+  const errors = validateProduct(cleanBody as ProductInput);
   if (errors.length > 0) {
     res.status(400).json({ errors });
     return;
   }
   try {
-    const product = await Product.create(req.body);
+    const product = await Product.create(cleanBody);
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
@@ -36,14 +38,15 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 };
 
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
-  const errors = validateProduct(req.body, true);
+  const cleanBody = sanitizeObject(req.body);
+  const errors = validateProduct(cleanBody as ProductInput, true);
   if (errors.length > 0) {
     res.status(400).json({ errors });
     return;
   }
   try {
     const { id } = req.params;
-    const product = await Product.findByIdAndUpdate(id, req.body);
+    const product = await Product.findByIdAndUpdate(id, cleanBody);
     if (!product) {
       res.status(404).json({ message: "Product not found!" });
       return;
@@ -63,7 +66,7 @@ export const deleteProduct = async (req: Request, res: Response): Promise<void> 
       res.status(404).json({ message: "Product not found!" });
       return;
     }
-    res.status(200).json({ message: "Product deleted succesfully!" });
+    res.status(200).json({ message: "Product deleted successfully!" });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
   }

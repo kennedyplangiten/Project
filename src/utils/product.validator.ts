@@ -1,4 +1,4 @@
-interface ProductInput {
+export interface ProductInput {
   name?: unknown;
   quantity?: unknown;
   price?: unknown;
