@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Product from "../modules/product.model";
 import { validateProduct, ProductInput } from "../utils/product.validator";
 import { sanitizeObject } from "../utils/sanitize";
+import { InputValidator as v } from "../utils/InputValidator";
 
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,6 +25,10 @@ export const getProduct = async (req: Request, res: Response): Promise<void> => 
 
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
   const cleanBody = sanitizeObject(req.body);
+  if(v.hasSqlInjection(req.body) || v.hasHtmlTag(req.body) || v.hasScriptTag(req.body)){
+    res.status(400).json({ message: "Injection has been detected!" });
+    return;
+  }
   const errors = validateProduct(cleanBody as ProductInput);
   if (errors.length > 0) {
     res.status(400).json({ errors });
